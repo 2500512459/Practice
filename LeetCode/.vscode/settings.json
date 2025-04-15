@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "*.cs": "csharp",
-        "xtree": "cpp"
+        "xtree": "cpp",
+        "algorithm": "cpp"
     }
 }
