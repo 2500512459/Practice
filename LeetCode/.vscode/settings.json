@@ -2,6 +2,7 @@
     "files.associations": {
         "*.cs": "csharp",
         "xtree": "cpp",
-        "algorithm": "cpp"
+        "algorithm": "cpp",
+        "vector": "cpp"
     }
 }
