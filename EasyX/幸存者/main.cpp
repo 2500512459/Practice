@@ -1,6 +1,31 @@
-#include "graphics.h"
+#include <graphics.h>
+#include <string>
 
-#include <cmath>
+int idx_anim = 0;
+const int plyer_nums = 6;
+IMAGE img_player_right[plyer_nums];
+IMAGE img_player_left[plyer_nums];
+
+void load_images()
+{
+	for (int i = 0; i < plyer_nums; i++)
+	{
+		std::wstring path = L"img/paimon_right_" + std::to_wstring(i) + L".png";
+        loadimage(&img_player_right[i], path.c_str());
+	}
+    for (int i = 0; i < plyer_nums; i++)
+	{
+		std::wstring path = L"img/paimon_left_" + std::to_wstring(i) + L".png";
+        loadimage(&img_player_left[i], path.c_str());
+	}
+}
+#pragma comment(lib, "MSIMG32.LIB")
+inline void putimage_alpha(int x, int y, IMAGE* img)
+{
+	int w  = img->getwidth();
+    int h  = img->getheight();
+    AlphaBlend(GetImageHDC(NULL), x, y, w, h, GetImageHDC(img), 0, 0, w, h, { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA });
+}
 
 int main()
 {
@@ -9,12 +34,10 @@ int main()
 	bool running = true;
 	ExMessage msg;
 
-	IMAGE background, player;
-	int player_x = 320, player_y = 240;
-	int player_speed = 10;
-	loadimage(&background, _T("img/background.png"));
-	loadimage(&player, _T("img/paimon_left_0.png"));
+	IMAGE background;
+    loadimage(&background, L"img/background.png");
 
+	load_images();
 	BeginBatchDraw();
 	while (running)
 	{
@@ -22,24 +45,17 @@ int main()
 
 		while (peekmessage(&msg))
 		{
-			// 移动方向
-			int dx = 0, dy = 0;
-			if (GetAsyncKeyState(VK_LEFT) & 0x8000) dx -= 1;
-			if (GetAsyncKeyState(VK_RIGHT) & 0x8000) dx += 1;
-			if (GetAsyncKeyState(VK_UP) & 0x8000) dy -= 1;
-			if (GetAsyncKeyState(VK_DOWN) & 0x8000) dy += 1;
 
-			// 如果有方向输入，归一化后乘速度
-			if (dx != 0 || dy != 0)
-			{
-				float length = sqrt(dx * dx + dy * dy);
-				player_x += static_cast<int>(player_speed * dx / length);
-				player_y += static_cast<int>(player_speed * dy / length);
-			}
 		}
+
+		static int count = 0;
+		if (++count % 5 == 0)
+			++idx_anim;
+		idx_anim = idx_anim % plyer_nums;
+
 		cleardevice();
 		putimage(0, 0, &background);
-		putimage(player_x, player_y, &player);
+		putimage_alpha(320, 240, &img_player_right[idx_anim]);
 		FlushBatchDraw();
 
 		DWORD end_time = GetTickCount();
