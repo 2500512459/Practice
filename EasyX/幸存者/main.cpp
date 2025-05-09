@@ -1,30 +1,25 @@
+#pragma comment(lib, "MSIMG32.LIB")
 #include <graphics.h>
 #include <string>
-#pragma comment(lib, "MSIMG32.LIB")
+#include "Animation.h"
 
-int idx_anim = 0;
-int palyer_speed = 5;
-const int plyer_nums = 6;
-IMAGE img_player_right[plyer_nums];
-IMAGE img_player_left[plyer_nums];
+const int WIN_LENGTH = 640;
+const int WIN_WIDTH = 480;
 
-POINT player_pos{ 310, 230 };
+int player_speed = 5;
+const int PLAYER_ANIM_NUM = 6;
 
-inline void load_images()
-{
-	for (size_t i = 0; i < plyer_nums; i++)
-	{
-		std::wstring path = L"img/paimon_right_" + std::to_wstring(i) + L".png";
-		loadimage(&img_player_right[i], path.c_str());
-	}
-	for (size_t i = 0; i < plyer_nums; i++)
-	{
-		std::wstring path = L"img/paimon_left_" + std::to_wstring(i) + L".png";
-		loadimage(&img_player_left[i], path.c_str());
-	}
-}
+const int PLAYER_WIDTH = 80;
+const int PLAYER_HEIGHT = 80;
+const int SHADOW_WIDTH = 32;
 
-// 改变图片透明度
+POINT player_pos{ WIN_LENGTH / 2 - PLAYER_WIDTH / 2, WIN_WIDTH / 2 - PLAYER_HEIGHT  / 2};
+
+Animation player_anim_left(_T("img/paimon_left_%d.png"), PLAYER_ANIM_NUM, 45);
+Animation player_anim_right(_T("img/paimon_right_%d.png"), PLAYER_ANIM_NUM, 45);
+
+IMAGE background, img_shadow;
+
 inline void putimage_alpha(int x, int y, IMAGE* img)
 {
 	int w = img->getwidth();
@@ -32,9 +27,28 @@ inline void putimage_alpha(int x, int y, IMAGE* img)
 	AlphaBlend(GetImageHDC(NULL), x, y, w, h, GetImageHDC(img), 0, 0, w, h, { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA });
 }
 
+void DrawPlayer(int delta, int dir_x)
+{
+	int pos_shadow_x = player_pos.x + (PLAYER_WIDTH / 2 - SHADOW_WIDTH / 2);
+	int pos_shadow_y = player_pos.y + PLAYER_HEIGHT - 8;
+	putimage_alpha(pos_shadow_x, pos_shadow_y, &img_shadow);
+
+	static bool face_left = false;
+	if (dir_x < 0)
+		face_left = true;
+	else if (dir_x > 0)
+		face_left = false;
+
+	if (face_left)
+		player_anim_left.Play(player_pos.x, player_pos.y, delta);
+	else
+		player_anim_right.Play(player_pos.x, player_pos.y, delta);
+}
+
+
 int main()
 {
-	initgraph(640, 480);
+	initgraph(WIN_LENGTH, WIN_WIDTH);
 
 	bool running = true;
 	bool is_move_up = false;
@@ -44,10 +58,9 @@ int main()
 
 	ExMessage msg;
 
-	IMAGE background;
 	loadimage(&background, _T("img/background.png"));
+	loadimage(&img_shadow, _T("img/shadow_player.png"));
 
-	load_images();
 	BeginBatchDraw();
 	while (running)
 	{
@@ -57,7 +70,7 @@ int main()
 		{
 			if (msg.message == WM_KEYDOWN)
 			{
-				switch (msg.wParam)
+				switch (msg.vkcode)
 				{
 				case VK_UP:
 					is_move_up = true;
@@ -74,7 +87,7 @@ int main()
 			}
 			if (msg.message == WM_KEYUP)
 			{
-				switch (msg.wParam)
+				switch (msg.vkcode)
 				{
 				case VK_UP:
 					is_move_up = false;
@@ -92,19 +105,15 @@ int main()
 			}
 		}
 
-		if (is_move_up) player_pos.y -= palyer_speed;
-		if (is_move_down) player_pos.y += palyer_speed;
-		if (is_move_left) player_pos.x -= palyer_speed;
-		if (is_move_right) player_pos.x += palyer_speed;
+		if (is_move_up) player_pos.y -= player_speed;
+		if (is_move_down) player_pos.y += player_speed;
+		if (is_move_left) player_pos.x -= player_speed;
+		if (is_move_right) player_pos.x += player_speed;
 
-		static int count = 0;
-		if (++count % 5 == 0)
-			++idx_anim;
-		idx_anim = idx_anim % plyer_nums;
 
 		cleardevice();
 		putimage(0, 0, &background);
-		putimage_alpha(player_pos.x, player_pos.y, &img_player_right[idx_anim]);
+		DrawPlayer(1000 / 144, is_move_right - is_move_left);
 		FlushBatchDraw();
 
 		DWORD end_time = GetTickCount();
