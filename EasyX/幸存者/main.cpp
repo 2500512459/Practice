@@ -105,11 +105,24 @@ int main()
 			}
 		}
 
-		if (is_move_up) player_pos.y -= player_speed;
-		if (is_move_down) player_pos.y += player_speed;
-		if (is_move_left) player_pos.x -= player_speed;
-		if (is_move_right) player_pos.x += player_speed;
-
+		//if (is_move_up) player_pos.y -= player_speed;
+		//if (is_move_down) player_pos.y += player_speed;
+		//if (is_move_left) player_pos.x -= player_speed;
+		//if (is_move_right) player_pos.x += player_speed;
+		int dir_x = is_move_right - is_move_left;
+        int dir_y = is_move_down - is_move_up;
+		double norms  = sqrt(dir_x * dir_x + dir_y * dir_y);
+		if (norms != 0)
+		{
+			double noms_x = dir_x / norms;
+            double noms_y = dir_y / norms;
+			player_pos.x += player_speed * noms_x;
+            player_pos.y += player_speed * noms_y;
+		}
+		if(player_pos.x < 0) player_pos.x = 0;
+        if(player_pos.x > WIN_LENGTH - PLAYER_WIDTH) player_pos.x = WIN_LENGTH - PLAYER_WIDTH;
+        if(player_pos.y < 0) player_pos.y = 0;
+        if(player_pos.y > WIN_WIDTH - PLAYER_HEIGHT) player_pos.y = WIN_WIDTH - PLAYER_HEIGHT;
 
 		cleardevice();
 		putimage(0, 0, &background);
